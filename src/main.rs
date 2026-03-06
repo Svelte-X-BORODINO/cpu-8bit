@@ -4,6 +4,7 @@ struct CPU {
     memory: [u8; 4096],
     stack: [u16; 16],
     stack_pointer: usize,
+    flags: u8,
 }
 
 impl CPU {
@@ -26,7 +27,7 @@ impl CPU {
                 0x0000 => {
                     return;
                 }
-                0x00E0 => { /* CLEAR SCREEN */ }
+                0x00E0 => print!("\x1B[2J\x1B[1;1H"),
                 0x00EE => {
                     self.ret();
                 }
@@ -121,10 +122,13 @@ impl CPU {
     }
 
     // (7xkk)
+    #[allow(unused_comparisons)]
     fn add_xy(&mut self, x: u8, y: u8) {
         self.registers[x as usize] += self.registers[y as usize];
 
-        // TODO: SET CARRY FLAG!!!!
+        if self.registers[x as usize] > 0xFF {
+            self.flags |= 0x80;
+        }
     }
 
     fn and_xy(&mut self, x: u8, y: u8) {
@@ -156,12 +160,12 @@ fn main() {
         position_in_memory: 0,
         stack: [0; 16],
         stack_pointer: 0,
+        flags: 0b00000000,
     };
 
     cpu.registers[0] = 5;
     cpu.registers[1] = 10;
 
-    //
     cpu.memory[0x000] = 0x21;
     cpu.memory[0x001] = 0x00;
     cpu.memory[0x002] = 0x21;
